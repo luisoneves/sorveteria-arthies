@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# aiRules and notes (local development only)
+.aiRules/
+N2-CONtexto/
+N3-Execucao/
