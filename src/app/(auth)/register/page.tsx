@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { useAuth } from '@/hooks';
-import { isValidEmail, isValidPassword } from '@/lib/utils';
+import { useToast } from '@/components/ui/Toast';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isAuthenticated } = useAuth();
+  const { addToast } = useToast();
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -17,7 +18,6 @@ export default function RegisterPage() {
     confirmarSenha: '',
     telefone: '',
   });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (isAuthenticated) {
@@ -31,25 +31,24 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
 
     if (!formData.nome.trim()) {
-      setError('Nome é obrigatório');
+      addToast('error', 'Nome é obrigatório');
       return;
     }
 
-    if (!isValidEmail(formData.email)) {
-      setError('Email inválido');
+    if (!formData.email.includes('@')) {
+      addToast('error', 'Email inválido');
       return;
     }
 
-    if (!isValidPassword(formData.senha)) {
-      setError('Senha deve ter no mínimo 8 caracteres e 1 número');
+    if (formData.senha.length < 8 || !/\d/.test(formData.senha)) {
+      addToast('error', 'Senha deve ter no mínimo 8 caracteres e 1 número');
       return;
     }
 
     if (formData.senha !== formData.confirmarSenha) {
-      setError('As senhas não coincidem');
+      addToast('error', 'As senhas não coincidem');
       return;
     }
 
@@ -62,9 +61,12 @@ export default function RegisterPage() {
         senha: formData.senha,
         telefone: formData.telefone || undefined,
       });
+      addToast('success', 'Conta criada com sucesso!');
       router.push('/cliente/shop');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao registrar');
+      const message = err instanceof Error ? err.message : 'Erro ao registrar';
+      console.error('Register error:', err);
+      addToast('error', message);
     } finally {
       setIsLoading(false);
     }
@@ -86,11 +88,6 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
 
             <Input
               label="Nome Completo"

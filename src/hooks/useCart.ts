@@ -3,7 +3,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ProdutoCarrinho, Produto } from '@/types';
-import { calculatePoints, FIDELIDADE } from '@/lib/constants';
+import { FIDELIDADE } from '@/lib/constants';
+import { calculatePoints } from '@/lib/utils';
 
 interface CartState {
   items: ProdutoCarrinho[];
