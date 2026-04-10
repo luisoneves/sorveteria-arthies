@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/api/auth'];
+const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public'];
 const ROLE_ROUTES: Record<string, UserRole[]> = {
   '/admin': ['admin'],
   '/gerente': ['admin', 'gerente'],

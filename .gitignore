@@ -42,5 +42,5 @@ next-env.d.ts
 
 # aiRules and notes (local development only)
 .aiRules/
-N2-CONtexto/
+.Contexto/
 N3-Execucao/

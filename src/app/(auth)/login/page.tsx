@@ -93,6 +93,16 @@ export default function LoginPage() {
               required
             />
 
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <span className="ml-2 text-sm text-gray-600">Lembrar-me</span>
+              </label>
+              <Link href="/forgot-password" className="text-sm text-primary-600 hover:underline">
+                Esqueci minha senha
+              </Link>
+            </div>
+
             <Button
               type="submit"
               className="w-full"
