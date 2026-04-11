@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
+import { verifyUserToken } from '@/lib/auth/jwt';
 
 export const dynamic = 'force-dynamic';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export async function GET() {
   try {
@@ -16,9 +19,33 @@ export async function GET() {
       );
     }
 
-    // Obter dados frescos do banco
-    const userData = JSON.parse(userCookie.value);
+    // Verificar token JWT
+    const userData = verifyUserToken(userCookie.value);
     
+    if (!userData) {
+      // Token inválido ou expirado
+      cookieStore.delete('user');
+      return NextResponse.json(
+        { error: 'Sessão expirada ou inválida' },
+        { status: 401 }
+      );
+    }
+
+    // Modo mock - retornar dados do token sem consultar banco
+    if (USE_MOCK) {
+      return NextResponse.json({
+        user: {
+          id: userData.id,
+          email: userData.email,
+          nome: userData.nome,
+          role: userData.role,
+          pontos: userData.pontos || 0,
+          telefone: userData.telefone,
+        },
+      });
+    }
+
+    // Modo Supabase - obter dados frescos do banco
     const { data: user, error } = await supabaseAdmin
       .from('usuarios')
       .select('id, email, nome, role, pontos, telefone, created_at')
