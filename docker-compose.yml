@@ -1,0 +1,56 @@
+# ========================================
+# Docker Compose - PostgreSQL para Desenvolvimento Local
+# ========================================
+# USO: docker compose up -d
+# ========================================
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sorveteria-db
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sorvete123
+      POSTGRES_DB: sorveteria
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: sorveteria-postgres-data
+
+# ========================================
+# INSTRUÇÕES DE USO:
+# ========================================
+# 
+# 1. Iniciar o banco:
+#    docker compose up -d
+#
+# 2. Verificar se está rodando:
+#    docker compose ps
+#
+# 3. Parar o banco:
+#    docker compose down
+#
+# 4.string de conexão:
+#    DATABASE_URL=postgresql://postgres:sorvete123@localhost:5432/sorveteria
+#
+# 5. Para resetar os dados:
+#    docker compose down -v  # remove os dados
+#    docker compose up -d   # cria novamente
+#
+# ========================================
