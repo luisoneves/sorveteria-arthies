@@ -15,3 +15,6 @@ export const supabaseAdmin = createClient(
     },
   }
 );
+
+// Server-only admin client - use '@/lib/supabase/admin' instead
+// This file is kept for backward compatibility
