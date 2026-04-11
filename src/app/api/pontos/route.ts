@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { FIDELIDADE } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 async function getUser() {
   const cookieStore = await cookies();
   const userCookie = cookieStore.get('user');
