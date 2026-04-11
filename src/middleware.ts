@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types';
-import { verifyUserToken, type JwtPayload } from '@/lib/auth/jwt';
+import { verifyUserToken } from '@/lib/auth/jwt';
 
-const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public', '/debug'];
+const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public'];
 const ROLE_ROUTES: Record<string, UserRole[]> = {
   '/admin': ['admin'],
   '/gerente': ['admin', 'gerente'],
@@ -13,6 +13,14 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Bloquear /debug em produção
+  if (pathname.startsWith('/debug')) {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.redirect(new URL('/404', request.url));
+    }
+    return NextResponse.next();
+  }
 
   // Rotas públicas
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
