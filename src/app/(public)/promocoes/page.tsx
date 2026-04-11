@@ -10,7 +10,7 @@ const promocoes = [
     descricao: 'Combo Família com 20% OFF. Perfeito para reunir a galera!',
     desconto: '20%', 
     codigo: 'FAMILIA20',
-    valido ate: '31/12/2026'
+    validoAte: '31/12/2026'
   },
   { 
     id: '2', 
@@ -18,7 +18,7 @@ const promocoes = [
     descricao: '2 Sorbets pelo preço de 1. Das 17h às 19h!',
     desconto: '50%', 
     codigo: 'HAPPY',
-    valido ate: '31/12/2026'
+    validoAte: '31/12/2026'
   },
   { 
     id: '3', 
@@ -26,7 +26,7 @@ const promocoes = [
     descricao: 'Leve 2 cremosos e ganhe 1 acompanhamento sortudo.',
     desconto: 'FREE', 
     codigo: 'SOBREMESA',
-    valido ate: '31/12/2026'
+    validoAte: '31/12/2026'
   },
   { 
     id: '4', 
@@ -34,7 +34,7 @@ const promocoes = [
     descricao: '20% OFF em todos os sabores com pistache.',
     desconto: '20%', 
     codigo: 'PISTACHE20',
-    valido ate: '30/06/2026'
+    validoAte: '30/06/2026'
   },
   { 
     id: '5', 
@@ -42,7 +42,7 @@ const promocoes = [
     descricao: '3 chocolates artesanais por R$49,90.',
     desconto: '15%', 
     codigo: 'CHOC15',
-    valido ate: '31/05/2026'
+    validoAte: '31/05/2026'
   },
 ];
 
@@ -87,7 +87,7 @@ export default function PromocoesPage() {
                 <div className="flex items-center justify-between mb-4">
                   <Badge variant="warning">{promo.desconto}</Badge>
                   <span className="text-sm text-gray-500">
-                    Válido até {promo.valido ate}
+                    Válido até {promo.validoAte}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{promo.titulo}</h3>
