@@ -11,6 +11,9 @@ interface ProdutoItem {
   categoria: string;
 }
 
+type IdadeGrupo = 'adulto' | 'idoso' | 'crianca';
+type Sexo = 'masculino' | 'feminino';
+
 const mockProdutos: ProdutoItem[] = [
   { id: '1', nome: 'Chocolate Belga', preco: 18.90, categoria: 'cremoso' },
   { id: '2', nome: 'Morango com Champagne', preco: 22.50, categoria: 'cremoso' },
@@ -31,6 +34,10 @@ export default function PDVPage() {
   const [carrinho, setCarrinho] = useState<{ produto: ProdutoItem; qtd: number }[]>([]);
   const [desconto, setDesconto] = useState(0);
   const [clienteFidelidade, setClienteFidelidade] = useState<string>('');
+  
+  // Campos demográficos para análise
+  const [idadeGrupo, setIdadeGrupo] = useState<IdadeGrupo | ''>('');
+  const [sexo, setSexo] = useState<Sexo | ''>('');
 
   const total = carrinho.reduce((sum, item) => sum + item.produto.preco * item.qtd, 0);
   const totalComDesconto = Math.max(0, total - desconto);
@@ -74,8 +81,67 @@ export default function PDVPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">PDV - Ponto de Venda</h1>
-        <StatusBadge status="em_andamento" />
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">
+            {new Date().toLocaleTimeString('pt-BR')}
+          </span>
+          <StatusBadge status="em_andamento" />
+        </div>
       </div>
+
+      {/* Campos demográficos */}
+      <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-pink-700">📊 Dados do Cliente (para análise)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Idade */}
+            <div>
+              <label className="text-sm font-medium text-gray-600 mb-2 block">Idade:</label>
+              <div className="flex gap-2">
+                {(['adulto', 'idoso', 'crianca'] as IdadeGrupo[]).map((tipo) => (
+                  <button
+                    key={tipo}
+                    onClick={() => setIdadeGrupo(idadeGrupo === tipo ? '' : tipo)}
+                    className={`
+                      flex-1 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all
+                      ${idadeGrupo === tipo 
+                        ? 'bg-pink-600 text-white shadow-md' 
+                        : 'bg-white border text-gray-600 hover:border-pink-300'
+                      }
+                    `}
+                  >
+                    {tipo === 'adulto' ? '👤 Adulto' : tipo === 'idoso' ? '👴 Idoso' : '👶 Criança'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Sexo */}
+            <div>
+              <label className="text-sm font-medium text-gray-600 mb-2 block">Sexo:</label>
+              <div className="flex gap-2">
+                {(['masculino', 'feminino'] as Sexo[]).map((tipo) => (
+                  <button
+                    key={tipo}
+                    onClick={() => setSexo(sexo === tipo ? '' : tipo)}
+                    className={`
+                      flex-1 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all
+                      ${sexo === tipo 
+                        ? 'bg-purple-600 text-white shadow-md' 
+                        : 'bg-white border text-gray-600 hover:border-purple-300'
+                      }
+                    `}
+                  >
+                    {tipo === 'masculino' ? '♂️ Masc' : '♀️ Fem'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de Produtos */}
