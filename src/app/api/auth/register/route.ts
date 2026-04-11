@@ -2,8 +2,43 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { registerSchema } from '@/lib/schemas';
+import { mockUsers, getMockUserByEmail } from '@/lib/mock-users';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export async function POST(request: Request) {
+  // Modo mock
+  if (USE_MOCK) {
+    const body = await request.json();
+    const { nome, email, senha, telefone } = body;
+
+    const existing = getMockUserByEmail(email);
+    if (existing) {
+      return NextResponse.json({ error: 'Email já cadastrado' }, { status: 409 });
+    }
+
+    const newUser = {
+      id: String(mockUsers.length + 1),
+      email,
+      nome,
+      role: 'cliente',
+      pontos: 0,
+      telefone: telefone || '',
+    };
+
+    const cookieStore = await cookies();
+    cookieStore.set('user', JSON.stringify(newUser), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    return NextResponse.json({ user: newUser });
+  }
+
+  // Modo produção (Supabase)
   try {
     const body = await request.json();
     
