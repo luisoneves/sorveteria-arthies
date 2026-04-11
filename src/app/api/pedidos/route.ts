@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
+import { mockAdapters } from '@/lib/api/adapters/mock.adapter';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
-// Armazenamento em memória para pedidos mock (apenas para desenvolvimento)
 const mockPedidos: any[] = [];
 let pedidoIdCounter = 1;
 
@@ -17,6 +17,37 @@ async function getUser() {
   } catch {
     return null;
   }
+}
+
+async function calcularTotal(items: any[], useMock: boolean): Promise<number> {
+  let totalCalculado = 0;
+  
+  for (const item of items) {
+    let preco: number;
+    
+    if (useMock) {
+      const produto = await mockAdapters.produto.getById(item.produto_id || item.id);
+      if (!produto) {
+        throw new Error(`Produto não encontrado: ${item.produto_id || item.id}`);
+      }
+      preco = produto.preco;
+    } else {
+      const { data: produto } = await supabaseAdmin
+        .from('produtos')
+        .select('preco')
+        .eq('id', item.produto_id || item.id)
+        .single();
+        
+      if (!produto) {
+        throw new Error(`Produto não encontrado: ${item.produto_id || item.id}`);
+      }
+      preco = Number(produto.preco);
+    }
+    
+    totalCalculado += preco * item.quantidade;
+  }
+  
+  return totalCalculado;
 }
 
 export async function GET(request: Request) {
@@ -67,19 +98,36 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { items, total } = body;
+  const items = body.items || [];
+  const totalEnviado = body.total;
+
+  if (!items || items.length === 0) {
+    return NextResponse.json({ error: 'Itens obrigatórios' }, { status: 400 });
+  }
+
+  // LEI 19: Preço calculado server-side
+  const totalCalculado = await calcularTotal(items, USE_MOCK);
+
+  // LEI 19: Validar que o total enviado bate com o calculado
+  // Se o cliente enviou um total, deve ser exatamente igual
+  // Diferença > 0.01 indica manipulação
+  if (totalEnviado && Math.abs(Number(totalEnviado) - totalCalculado) > 0.01) {
+    return NextResponse.json({ 
+      error: 'Preço manipulado. Recalcule no servidor.',
+      code: 'PRICE_MANIPULATION_DETECTED'
+    }, { status: 400 });
+  }
 
   if (USE_MOCK) {
-    // Criar pedido mock
     const novoPedido = {
       id: String(pedidoIdCounter++),
       cliente_id: user.id,
       vendedor_id: null,
       status: 'pendente',
       status_pagamento: 'pendente',
-      total: total || items.reduce((sum: number, item: any) => sum + (item.preco * item.quantidade), 0),
+      total: totalCalculado,
       pontos_usados: 0,
-      pontos_ganhos: Math.floor((total || 0) / 10),
+      pontos_ganhos: Math.floor(totalCalculado / 10),
       created_at: new Date().toISOString(),
       itens: items.map((item: any, idx: number) => ({
         id: String(idx + 1),
