@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types';
+import { verifyUserToken, type JwtPayload } from '@/lib/auth/jwt';
 
-const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public'];
+const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public', '/debug'];
 const ROLE_ROUTES: Record<string, UserRole[]> = {
   '/admin': ['admin'],
   '/gerente': ['admin', 'gerente'],
@@ -62,7 +63,8 @@ function getUserRole(request: NextRequest): UserRole | null {
   
   if (userCookie) {
     try {
-      const user = JSON.parse(userCookie.value);
+      const user = verifyUserToken(userCookie.value);
+      if (!user) return null;
       return user.role as UserRole;
     } catch {
       return null;

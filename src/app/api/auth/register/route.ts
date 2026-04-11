@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { registerSchema } from '@/lib/schemas';
 import { mockUsers, getMockUserByEmail } from '@/lib/mock-users';
+import { createUserToken, SESSION_COOKIE_OPTIONS } from '@/lib/auth/jwt';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
@@ -26,14 +27,17 @@ export async function POST(request: Request) {
       telefone: telefone || '',
     };
 
-    const cookieStore = await cookies();
-    cookieStore.set('user', JSON.stringify(newUser), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
+    const token = createUserToken({
+      id: newUser.id,
+      email: newUser.email,
+      nome: newUser.nome,
+      role: newUser.role,
+      pontos: newUser.pontos,
+      telefone: newUser.telefone,
     });
+
+    const cookieStore = await cookies();
+    cookieStore.set('user', token, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json({ user: newUser });
   }
@@ -114,21 +118,22 @@ export async function POST(request: Request) {
       created_at: newUser.created_at,
     };
 
-    // Criar cookie de sessão
-    const cookieStore = await cookies();
-    cookieStore.set('user', JSON.stringify(userResponse), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
-      path: '/',
+    // Criar token JWT assinado
+    const token = createUserToken({
+      id: newUser.id,
+      email: newUser.email,
+      nome: newUser.nome,
+      role: newUser.role,
+      pontos: newUser.pontos,
+      telefone: newUser.telefone,
     });
+
+    // Criar cookie de sessão com JWT
+    const cookieStore = await cookies();
+    cookieStore.set('user', token, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json({
       user: userResponse,
-      session: {
-        access_token: authData.session?.access_token,
-      },
     });
   } catch (error) {
     console.error('Register error:', error);
