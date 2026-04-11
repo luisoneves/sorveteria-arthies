@@ -35,7 +35,27 @@
 - Tarefas em `.Contexto/TASK.md`
 
 ## Pendências
-- [ ] Sprint 2: Autenticação & UX
-- [ ] Sprint 3: Dashboards e funcionalidades
-- [ ] Sprint 4: Qualidade & Deploy
-- [ ] Sprint 5: Supabase Real
+
+### Sprint 1: Fundamentos (Concluído)
+- [IA] ✅ Implementado & Testado | [HUMANO] ⏳ Validado em Produção: Lei 19 (Preço server-side)
+- [IA] ✅ Implementado & Testado | [HUMANO] ⏳ Validado em Produção: Sistema de mock local
+- [IA] ✅ Implementado & Testado | [HUMANO] ⏳ Validado em Produção: RBAC (4 roles)
+- [IA] ✅ Implementado & Testado | [HUMANO] ⏳ Validado em Produção: Programa de Fidelidade
+- [IA] ✅ Implementado & Testado | [HUMANO] ⏳ Validado em Produção: Homepage pública
+
+### Sprint 2: Autenticação & UX
+- [ ] Autenticação completa (login/logout)
+- [ ] UI/UX refinada
+
+### Sprint 3: Dashboards e Funcionalidades
+- [ ] Dashboard Admin
+- [ ] Dashboard Gerente
+- [ ] Dashboard Vendedor (PDV)
+- [ ] E-commerce completo
+
+### Sprint 4: Qualidade & Deploy
+- [ ] Testes E2E
+- [ ] Deploy produção
+
+### Sprint 5: Supabase Real
+- [ ] Migrar de mock para Supabase real
