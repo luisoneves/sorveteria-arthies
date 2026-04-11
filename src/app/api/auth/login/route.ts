@@ -2,8 +2,32 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { loginSchema } from '@/lib/schemas';
+import { validateMockPassword } from '@/lib/mock-users';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export async function POST(request: Request) {
+  // Modo mock - verificar credenciais locais
+  if (USE_MOCK) {
+    const body = await request.json();
+    const { email, senha } = body;
+
+    const user = validateMockPassword(email, senha);
+    if (user) {
+      const cookieStore = await cookies();
+      cookieStore.set('user', JSON.stringify(user), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+      return NextResponse.json({ user });
+    }
+    return NextResponse.json({ error: 'Email ou senha inválidos' }, { status: 401 });
+  }
+
+  // Modo produção - usar Supabase
   try {
     const body = await request.json();
     
