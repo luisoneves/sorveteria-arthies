@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom';
 import axe from 'axe-core';
+import fs from 'fs';
 
 export async function runAccessibilityAudit(html: string) {
   const dom = new JSDOM(html, {
@@ -28,7 +29,14 @@ export async function runAccessibilityAudit(html: string) {
   };
 }
 
-function calculateScore(violations: any[]) {
+interface AxeViolation {
+  id: string;
+  impact: string;
+  description: string;
+  nodes: { selector: string }[];
+}
+
+function calculateScore(violations: AxeViolation[]) {
   const critical = violations.filter(v => v.impact === 'critical').length;
   const serious = violations.filter(v => v.impact === 'serious').length;
   const moderate = violations.filter(v => v.impact === 'moderate').length;
@@ -39,7 +47,7 @@ function calculateScore(violations: any[]) {
   return 100;
 }
 
-export function createAxeReport(violations: any[]) {
+export function createAxeReport(violations: AxeViolation[]) {
   if (violations.length === 0) {
     return '✅ Acessibilidade: Nenhuma violação encontrada';
   }
@@ -76,11 +84,10 @@ export function createAxeReport(violations: any[]) {
 }
 
 if (require.main === module) {
-  const fs = require('fs');
   const html = fs.readFileSync('./build/index.html', 'utf-8');
   
   runAccessibilityAudit(html).then(results => {
-    console.log(createReport(results.violationsDetails));
+    console.log(createAxeReport(results.violationsDetails));
     process.exit(results.violations > 0 ? 1 : 0);
   });
 }
