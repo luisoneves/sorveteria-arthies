@@ -1,21 +1,17 @@
-'use server';
+'server-only';
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!serviceKey && process.env.NODE_ENV === 'production') {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required in production');
+if (!supabaseUrl || !serviceKey) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
 }
 
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  serviceKey || 'placeholder-service-key',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+export const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});

@@ -1,20 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * @deprecated Use '@/lib/supabase/browser', '@/lib/supabase/server', or '@/lib/supabase/admin' instead
+ * This file is kept for backward compatibility.
+ */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+import { createBrowserClient } from '@supabase/ssr';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export function createBrowserSupabaseClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
-
-// Server-only admin client - use '@/lib/supabase/admin' instead
-// This file is kept for backward compatibility
+import { supabaseAdmin } from './supabase/admin';
+export { supabaseAdmin };

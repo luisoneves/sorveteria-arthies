@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types';
-import { verifyUserToken } from '@/lib/auth/jwt';
+import { verifyUserToken, getCookieName } from '@/lib/auth/jwt';
 
 const PUBLIC_ROUTES = ['/', '/shop', '/login', '/register', '/forgot-password', '/sobre', '/promocoes', '/api/auth', '/api/public'];
 const ROLE_ROUTES: Record<string, UserRole[]> = {
@@ -13,6 +13,7 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const cookieName = getCookieName();
 
   // Bloquear /debug em produção
   if (pathname.startsWith('/debug')) {
@@ -33,7 +34,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Verificar autenticação (via cookie ou header)
-  const userCookie = request.cookies.get('user');
+  const userCookie = request.cookies.get(cookieName);
   const authHeader = request.headers.get('authorization');
 
   if (!userCookie && !authHeader) {
@@ -47,7 +48,7 @@ export function middleware(request: NextRequest) {
   // Verificar role para rotas protegidas
   for (const [route, allowedRoles] of Object.entries(ROLE_ROUTES)) {
     if (pathname.startsWith(route)) {
-      const userRole = getUserRole(request);
+      const userRole = getUserRole(request, cookieName);
       
       if (!userRole || !allowedRoles.includes(userRole)) {
         if (pathname.startsWith('/api/')) {
@@ -66,8 +67,8 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-function getUserRole(request: NextRequest): UserRole | null {
-  const userCookie = request.cookies.get('user');
+function getUserRole(request: NextRequest, cookieName: string): UserRole | null {
+  const userCookie = request.cookies.get(cookieName);
   
   if (userCookie) {
     try {

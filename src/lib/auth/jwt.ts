@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-change-in-production';
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 
 export interface JwtPayload {
   id: string;
@@ -62,3 +62,7 @@ export const SESSION_COOKIE_OPTIONS = {
   maxAge: SESSION_MAX_AGE,
   path: '/',
 };
+
+export function getCookieName(): string {
+  return process.env.NODE_ENV === 'production' ? '__Host-session' : 'session';
+}
