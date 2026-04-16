@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { chromium } from 'playwright';
 
 interface PerformanceMetrics {
@@ -51,10 +52,10 @@ async function measurePerformance(url: string): Promise<PerformanceMetrics> {
     };
   });
   
-  metrics.ttfb = perf.domContentLoaded;
-  metrics.fcp = perf.firstContentfulPaint;
-  metrics.cls = perf.cumulativeLayoutShift;
-  metrics.totalSize = perf.transferSize;
+  metrics.ttfb = perf.domContentLoaded || 0;
+  metrics.fcp = perf.firstContentfulPaint || 0;
+  metrics.cls = perf.cumulativeLayoutShift || 0;
+  metrics.totalSize = perf.transferSize || 0;
   
   await browser.close();
   

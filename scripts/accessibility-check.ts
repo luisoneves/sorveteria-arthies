@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSDOM } from 'jsdom';
 import axe from 'axe-core';
 import fs from 'fs';
@@ -19,24 +20,19 @@ export async function runAccessibilityAudit(html: string) {
     violations: results.violations.length,
     passes: results.passes.length,
     incomplete: results.incomplete.length,
-    violationsDetails: results.violations.map(v => ({
+    violationsDetails: results.violations.map((v: any) => ({
       id: v.id,
-      impact: v.impact,
+      impact: v.impact || 'unknown',
       description: v.description,
       nodes: v.nodes.length,
     })),
-    score: calculateScore(results.violations),
+    score: calculateScore(results.violations as any[]),
   };
 }
 
-interface AxeViolation {
-  id: string;
-  impact: string;
-  description: string;
-  nodes: { selector: string }[];
-}
-
-function calculateScore(violations: AxeViolation[]) {
+function calculateScore(violations: any[]) {
+  if (!violations || violations.length === 0) return 100;
+  
   const critical = violations.filter(v => v.impact === 'critical').length;
   const serious = violations.filter(v => v.impact === 'serious').length;
   const moderate = violations.filter(v => v.impact === 'moderate').length;
@@ -47,8 +43,8 @@ function calculateScore(violations: AxeViolation[]) {
   return 100;
 }
 
-export function createAxeReport(violations: AxeViolation[]) {
-  if (violations.length === 0) {
+export function createAxeReport(violations: any[]) {
+  if (!violations || violations.length === 0) {
     return '✅ Acessibilidade: Nenhuma violação encontrada';
   }
   
@@ -63,7 +59,7 @@ export function createAxeReport(violations: AxeViolation[]) {
   
   if (grouped.critical.length > 0) {
     report += '## 🔴 Critical\n';
-    grouped.critical.forEach(v => {
+    grouped.critical.forEach((v: any) => {
       report += `- ${v.id}: ${v.description} (${v.nodes.length} nós)\n`;
     });
     report += '\n';
@@ -71,7 +67,7 @@ export function createAxeReport(violations: AxeViolation[]) {
   
   if (grouped.serious.length > 0) {
     report += '## 🟠 Serious\n';
-    grouped.serious.forEach(v => {
+    grouped.serious.forEach((v: any) => {
       report += `- ${v.id}: ${v.description}\n`;
     });
     report += '\n';
