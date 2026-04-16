@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- TABELA: USUÁRIOS
 -- ========================================
 CREATE TABLE IF NOT EXISTS usuarios (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     nome VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL CHECK (role IN ('admin', 'gerente', 'vendedor', 'cliente')),
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_role ON usuarios(role);
 -- TABELA: PRODUTOS
 -- ========================================
 CREATE TABLE IF NOT EXISTS produtos (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
     preco DECIMAL(10, 2) NOT NULL CHECK (preco >= 0),
@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS produtos (
     imagem TEXT,
     ativo BOOLEAN DEFAULT true,
     estoque INTEGER DEFAULT 0 CHECK (estoque >= 0),
+    deleted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -52,14 +53,18 @@ CREATE INDEX IF NOT EXISTS idx_produtos_ativo ON produtos(ativo);
 -- TABELA: PEDIDOS
 -- ========================================
 CREATE TABLE IF NOT EXISTS pedidos (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cliente_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     vendedor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     status VARCHAR(50) DEFAULT 'pendente' CHECK (status IN ('pendente', 'em_andamento', 'concluido', 'cancelado')),
     status_pagamento VARCHAR(50) DEFAULT 'pendente' CHECK (status_pagamento IN ('pendente', 'pago', 'falhou')),
-    total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    tipo VARCHAR(50) DEFAULT 'balcao',
+    valor_total DECIMAL(10, 2) NOT NULL DEFAULT 0,
     pontos_usados INTEGER DEFAULT 0,
     pontos_ganhos INTEGER DEFAULT 0,
+    idade_grupo VARCHAR(50),
+    sexo VARCHAR(10),
+    canceled_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -72,12 +77,13 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_created ON pedidos(created_at DESC);
 -- TABELA: ITENS DO PEDIDO
 -- ========================================
 CREATE TABLE IF NOT EXISTS itens_pedido (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     pedido_id UUID REFERENCES pedidos(id) ON DELETE CASCADE,
     produto_id UUID REFERENCES produtos(id) ON DELETE SET NULL,
     quantidade INTEGER NOT NULL CHECK (quantidade > 0),
     preco_unitario DECIMAL(10, 2) NOT NULL CHECK (preco_unitario >= 0),
     desconto DECIMAL(10, 2) DEFAULT 0 CHECK (desconto >= 0),
+    subtotal DECIMAL(10, 2),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -87,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_itens_pedido ON itens_pedido(pedido_id);
 -- TABELA: PROMOÇÕES
 -- ========================================
 CREATE TABLE IF NOT EXISTS promocoes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
     tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('percentual', 'fixo', 'compre_ganhe')),
@@ -108,9 +114,10 @@ CREATE INDEX IF NOT EXISTS idx_promocoes_datas ON promocoes(data_inicio, data_fi
 -- TABELA: TRANSAÇÕES DE PONTOS
 -- ========================================
 CREATE TABLE IF NOT EXISTS transacoes_pontos (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cliente_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
-    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('ganho', 'uso')),
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('credito', 'debito', 'ganho', 'uso')),
+    valor DECIMAL(10, 2) DEFAULT 0,
     pontos INTEGER NOT NULL,
     descricao TEXT,
     pedido_id UUID REFERENCES pedidos(id) ON DELETE SET NULL,
@@ -124,7 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_transacoes_created ON transacoes_pontos(created_a
 -- TABELA: FORNECEDORES
 -- ========================================
 CREATE TABLE IF NOT EXISTS fornecedores (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(255) NOT NULL,
     contato VARCHAR(255),
     telefone VARCHAR(20),
@@ -138,13 +145,13 @@ CREATE TABLE IF NOT EXISTS fornecedores (
 -- TABELA: COMPRAS (ESTOQUE)
 -- ========================================
 CREATE TABLE IF NOT EXISTS compras (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     fornecedor_id UUID REFERENCES fornecedores(id) ON DELETE SET NULL,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     status VARCHAR(50) DEFAULT 'pendente' CHECK (status IN ('pendente', 'recebido', 'cancelado')),
-    total DECIMAL(10, 2) DEFAULT 0,
+    valor_total DECIMAL(10, 2) DEFAULT 0,
     data_prevista DATE,
     data_recebimento DATE,
-    created_by UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -154,18 +161,21 @@ CREATE INDEX IF NOT EXISTS idx_compras_status ON compras(status);
 -- TABELA: ITENS DA COMPRA
 -- ========================================
 CREATE TABLE IF NOT EXISTS itens_compra (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     compra_id UUID REFERENCES compras(id) ON DELETE CASCADE,
+    produto_id UUID REFERENCES produtos(id) ON DELETE SET NULL,
     produto_nome VARCHAR(255) NOT NULL,
     quantidade INTEGER NOT NULL,
-    preco_unitario DECIMAL(10, 2) NOT NULL
+    preco_unitario DECIMAL(10, 2) NOT NULL,
+    subtotal DECIMAL(10, 2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ========================================
 -- TABELA: REPOSIÇÕES
 -- ========================================
 CREATE TABLE IF NOT EXISTS reposicoes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     vendedor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     gerente_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     status VARCHAR(50) DEFAULT 'solicitada' CHECK (status IN ('solicitada', 'aprovada', 'rejeitada', 'comprada')),
@@ -178,10 +188,12 @@ CREATE TABLE IF NOT EXISTS reposicoes (
 -- TABELA: ITENS DA REPOSIÇÃO
 -- ========================================
 CREATE TABLE IF NOT EXISTS itens_reposicao (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reposicao_id UUID REFERENCES reposicoes(id) ON DELETE CASCADE,
+    produto_id UUID REFERENCES produtos(id) ON DELETE SET NULL,
     produto_nome VARCHAR(255) NOT NULL,
-    quantidade INTEGER NOT NULL
+    quantidade INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ========================================
@@ -234,7 +246,7 @@ BEGIN
     UPDATE usuarios SET pontos = pontos + p_pontos WHERE id = p_usuario_id;
     
     INSERT INTO transacoes_pontos (cliente_id, tipo, pontos, descricao, pedido_id)
-    VALUES (p_usuario_id, 'ganho', p_pontos, p_descricao, p_pedido_id);
+    VALUES (p_usuario_id, 'credito', p_pontos, p_descricao, p_pedido_id);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -255,7 +267,7 @@ BEGIN
         UPDATE usuarios SET pontos = pontos - p_pontos WHERE id = p_usuario_id;
         
         INSERT INTO transacoes_pontos (cliente_id, tipo, pontos, descricao, pedido_id)
-        VALUES (p_usuario_id, 'uso', p_pontos, p_descricao, p_pedido_id);
+        VALUES (p_usuario_id, 'debito', p_pontos, p_descricao, p_pedido_id);
     ELSE
         RAISE EXCEPTION 'Pontos insuficientes';
     END IF;
@@ -271,28 +283,24 @@ ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE produtos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedidos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promocoes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transacoes_pontos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fornecedores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compras ENABLE ROW LEVEL SECURITY;
+ALTER TABLE itens_compra ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reposicoes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE itens_reposicao ENABLE ROW LEVEL SECURITY;
 
 -- ========================================
--- DADOS INICIAIS
+-- POLÍTICAS RLS BÁSICAS
 -- ========================================
 
--- Inserir admin padrão (senha: admin123 - MUDAR EM PRODUÇÃO!)
--- O admin será criado via Auth do Supabase, depois vincular aqui
+-- Usuários: leitura pública, escrita para authenticated
+CREATE POLICY "Usuários são públicos para leitura" ON usuarios FOR SELECT USING (true);
+CREATE POLICY "Usuários podem ver seus próprios dados" ON usuarios FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Usuários podem atualizar seus próprios dados" ON usuarios FOR UPDATE USING (auth.uid() = id);
 
--- Inserir produtos de exemplo
-INSERT INTO produtos (nome, descricao, preco, categoria, estoque) VALUES
-('Chocolate Belga', 'Gelato cremoso de chocolate belga 70% cacau', 18.90, 'cremoso', 50),
-('Morango Champagne', 'Morango fresco com toque de champagne', 22.50, 'cremoso', 40),
-('Pistache', 'Pistache italiano importado', 24.90, 'cremoso', 30),
-('Ninho com Nutella', 'Leite em pó com Nutella genuína', 26.90, 'especial', 25),
-('Oreo', 'Biscoito Oreo triturado no gelato de baunilha', 23.90, 'especial', 35),
-('Limão Siciliano', 'Sorbet refrescante de limão siciliano', 16.90, 'sorbet', 45),
-('Manga', 'Sorbet 100% manga tropical', 16.90, 'sorbet', 40),
-('Maracujá', 'Sorbet de maracujá fresco', 16.90, 'sorbet', 40),
-('Caldav', 'Massa de biscoito crocante', 4.90, 'acompanhamento', 100),
-('Morango', 'Morango fresco fatiado', 5.90, 'acompanhamento', 80),
-('Granulado', 'Mix de chocolates coloridos', 4.50, 'acompanhamento', 100)
-ON CONFLICT DO NOTHING;
+-- Produtos: leitura pública para ativos
+CREATE POLICY "Produtos ativos são públicos" ON produtos FOR SELECT USING (ativo = true AND deleted_at IS NULL);
 
 -- ========================================
 -- FIM DA MIGRATION
