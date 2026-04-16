@@ -20,7 +20,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@arcjet/next": "^1.4.0",
     "@react-email/components": "^1.0.12",
     "@sentry/nextjs": "^10.48.0",
     "@sentry/wizard": "^6.12.0",
