@@ -16,7 +16,8 @@
     "test:e2e:debug": "playwright test --debug",
     "test:all": "npm run lint && npm run build && npm run test",
     "test:unit": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",
@@ -30,7 +31,8 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
-    "supertest": "^7.0.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@playwright/test": "latest",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "latest",
@@ -42,7 +44,9 @@
     "@vitejs/plugin-react": "latest",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "husky": "^9.1.7",
     "jsdom": "latest",
+    "supertest": "^7.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "latest"

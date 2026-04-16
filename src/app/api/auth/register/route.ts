@@ -4,10 +4,22 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { registerSchema } from '@/lib/schemas';
 import { mockUsers, getMockUserByEmail } from '@/lib/mock-users';
 import { createUserToken, SESSION_COOKIE_OPTIONS } from '@/lib/auth/jwt';
+import { authRateLimiter, getClientIp, setRateLimitHeaders } from '@/lib/rate-limit';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const { allowed, remaining, resetAt } = authRateLimiter.check(ip);
+
+  if (!allowed) {
+    const response = NextResponse.json(
+      { error: 'Muitas tentativas. Aguarde 15 minutos.' },
+      { status: 429 }
+    );
+    return setRateLimitHeaders(response, remaining, resetAt);
+  }
+
   // Modo mock
   if (USE_MOCK) {
     const body = await request.json();
@@ -15,7 +27,8 @@ export async function POST(request: Request) {
 
     const existing = getMockUserByEmail(email);
     if (existing) {
-      return NextResponse.json({ error: 'Email já cadastrado' }, { status: 409 });
+      const errorResponse = NextResponse.json({ error: 'Email já cadastrado' }, { status: 409 });
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     const newUser = {
@@ -39,7 +52,8 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     cookieStore.set('user', token, SESSION_COOKIE_OPTIONS);
 
-    return NextResponse.json({ user: newUser });
+    const successResponse = NextResponse.json({ user: newUser });
+    return setRateLimitHeaders(successResponse, remaining, resetAt);
   }
 
   // Modo produção (Supabase)
@@ -49,10 +63,11 @@ export async function POST(request: Request) {
     // Validar input
     const result = registerSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: result.error.errors[0].message },
         { status: 400 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     const { nome, email, senha, telefone } = result.data;
@@ -65,10 +80,11 @@ export async function POST(request: Request) {
       .single();
 
     if (existingUser) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: 'Email já cadastrado' },
         { status: 409 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     // Criar usuário no Supabase Auth
@@ -78,10 +94,11 @@ export async function POST(request: Request) {
     });
 
     if (authError) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: authError.message },
         { status: 400 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     // Criar usuário na tabela usuarios
@@ -101,10 +118,11 @@ export async function POST(request: Request) {
 
     if (userError) {
       console.error('Error creating user:', userError);
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: 'Erro ao criar usuário' },
         { status: 500 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     // Preparar resposta
@@ -132,14 +150,14 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     cookieStore.set('user', token, SESSION_COOKIE_OPTIONS);
 
-    return NextResponse.json({
-      user: userResponse,
-    });
+    const successResponse = NextResponse.json({ user: userResponse });
+    return setRateLimitHeaders(successResponse, remaining, resetAt);
   } catch (error) {
     console.error('Register error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
+    return setRateLimitHeaders(errorResponse, remaining, resetAt);
   }
 }

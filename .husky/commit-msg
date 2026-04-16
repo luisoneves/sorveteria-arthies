@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run commitlint on commit message
+echo "Validating commit message..."
+npx --no -- commitlint --edit $1
+
+if [ $? -ne 0 ]; then
+  echo "❌ Invalid commit message!"
+  echo "Use: tipo(escopo): descrição"
+  echo "Ex: feat(auth): adicionar login"
+  exit 1
+fi
+
+echo "✅ Commit message valid!"

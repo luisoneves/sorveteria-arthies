@@ -4,10 +4,24 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { loginSchema } from '@/lib/schemas';
 import { validateMockPassword } from '@/lib/mock-users';
 import { createUserToken, SESSION_COOKIE_OPTIONS } from '@/lib/auth/jwt';
+import { authRateLimiter, getClientIp, setRateLimitHeaders } from '@/lib/rate-limit';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const { allowed, remaining, resetAt } = authRateLimiter.check(ip);
+
+  let response: NextResponse;
+
+  if (!allowed) {
+    response = NextResponse.json(
+      { error: 'Muitas tentativas. Aguarde 15 minutos.' },
+      { status: 429 }
+    );
+    return setRateLimitHeaders(response, remaining, resetAt);
+  }
+
   // Modo mock - verificar credenciais locais
   if (USE_MOCK) {
     const body = await request.json();
@@ -36,7 +50,8 @@ export async function POST(request: Request) {
       };
       return NextResponse.json({ user: userResponse });
     }
-    return NextResponse.json({ error: 'Email ou senha inválidos' }, { status: 401 });
+      const errorResponse = NextResponse.json({ error: 'Email ou senha inválidos' }, { status: 401 });
+    return setRateLimitHeaders(errorResponse, remaining, resetAt);
   }
 
   // Modo produção - usar Supabase
@@ -46,10 +61,11 @@ export async function POST(request: Request) {
     // Validar input
     const result = loginSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: result.error.errors[0].message },
         { status: 400 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     const { email, senha } = result.data;
@@ -63,10 +79,11 @@ export async function POST(request: Request) {
       .single();
 
     if (userError || !users) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     // Verificar senha (em produção, usar bcrypt.compare)
@@ -77,10 +94,11 @@ export async function POST(request: Request) {
     });
 
     if (signInError) {
-      return NextResponse.json(
+      const errorResponse = NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
       );
+      return setRateLimitHeaders(errorResponse, remaining, resetAt);
     }
 
     // Preparar resposta do usuário (sem a senha)
@@ -108,14 +126,14 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     cookieStore.set('user', token, SESSION_COOKIE_OPTIONS);
 
-    return NextResponse.json({
-      user: userResponse,
-    });
+    const successResponse = NextResponse.json({ user: userResponse });
+    return setRateLimitHeaders(successResponse, remaining, resetAt);
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
+    return setRateLimitHeaders(errorResponse, remaining, resetAt);
   }
 }
