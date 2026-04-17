@@ -130,7 +130,7 @@ export default function ReposicoesPage() {
 
                   {repo.observacao && (
                     <p className="text-sm text-gray-600 mb-4 italic">
-                      💬 "{repo.observacao}"
+                      💬 &quot;{repo.observacao}&quot;
                     </p>
                   )}
 

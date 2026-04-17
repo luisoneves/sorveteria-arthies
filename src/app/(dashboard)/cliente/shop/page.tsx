@@ -4,32 +4,21 @@ import { useState } from 'react';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { useCart, useAuth } from '@/hooks';
 import { formatCurrency, cn } from '@/lib/utils';
-import type { CategoriaProduto } from '@/types';
-
-interface Produto {
-  id: string;
-  nome: string;
-  descricao: string;
-  preco: number;
-  precoOriginal?: number;
-  categoria: CategoriaProduto;
-  emPromocao?: boolean;
-  desconto?: number;
-}
+import type { Produto, CategoriaProduto } from '@/types';
 
 const mockProdutos: Produto[] = [
-  { id: '1', nome: 'Chocolate Belga', descricao: 'Gelato cremoso de chocolate belga 70% cacau', preco: 18.90, categoria: 'cremoso' },
-  { id: '2', nome: 'Morango Champagne', descricao: 'Morango fresco com toque de champagne', preco: 22.50, categoria: 'cremoso' },
-  { id: '3', nome: 'Pistache', descricao: 'Pistache italiano importado', preco: 24.90, categoria: 'cremoso' },
-  { id: '4', nome: 'Ninho com Nutella', descricao: 'Leite em pó com Nutella genuína', preco: 26.90, categoria: 'especial' },
-  { id: '5', nome: 'Oreo', descricao: 'Biscoito Oreo triturado no gelato de baunilha', preco: 23.90, categoria: 'especial' },
-  { id: '6', nome: 'Limão Siciliano', descricao: 'Sorbet refrescante de limão siciliano', preco: 16.90, categoria: 'sorbet' },
-  { id: '7', nome: 'Manga', descricao: 'Sorbet 100% manga tropical', preco: 16.90, categoria: 'sorbet' },
-  { id: '8', nome: 'Maracujá', descricao: 'Sorbet de maracujá fresco', preco: 16.90, categoria: 'sorbet' },
-  { id: '9', nome: 'Caldav', descricao: 'Massa de biscoito crocante', preco: 4.90, categoria: 'acompanhamento' },
-  { id: '10', nome: 'Morango', descricao: 'Morango fresco fatiado', preco: 5.90, categoria: 'acompanhamento' },
-  { id: '11', nome: 'Granulado', descricao: 'Mix de chocolates coloridos', preco: 4.50, categoria: 'acompanhamento' },
-  { id: '12', nome: 'Combo Família', descricao: '3 gelatos + acompanhamentos', preco: 59.90, precoOriginal: 74.70, categoria: 'especial', emPromocao: true },
+  { id: '1', nome: 'Chocolate Belga', descricao: 'Gelato cremoso de chocolate belga 70% cacau', preco: 18.90, categoria: 'cremoso', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '2', nome: 'Morango Champagne', descricao: 'Morango fresco com toque de champagne', preco: 22.50, categoria: 'cremoso', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '3', nome: 'Pistache', descricao: 'Pistache italiano importado', preco: 24.90, categoria: 'cremoso', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '4', nome: 'Ninho com Nutella', descricao: 'Leite em pó com Nutella genuína', preco: 26.90, categoria: 'especial', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '5', nome: 'Oreo', descricao: 'Biscoito Oreo triturado no gelato de baunilha', preco: 23.90, categoria: 'especial', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '6', nome: 'Limão Siciliano', descricao: 'Sorbet refrescante de limão siciliano', preco: 16.90, categoria: 'sorbet', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '7', nome: 'Manga', descricao: 'Sorbet 100% manga tropical', preco: 16.90, categoria: 'sorbet', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '8', nome: 'Maracujá', descricao: 'Sorbet de maracujá fresco', preco: 16.90, categoria: 'sorbet', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '9', nome: 'Caldav', descricao: 'Massa de biscoito crocante', preco: 4.90, categoria: 'acompanhamento', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '10', nome: 'Morango', descricao: 'Morango fresco fatiado', preco: 5.90, categoria: 'acompanhamento', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '11', nome: 'Granulado', descricao: 'Mix de chocolates coloridos', preco: 4.50, categoria: 'acompanhamento', ativo: true, estoque: 100, created_at: '2024-01-01' },
+  { id: '12', nome: 'Combo Família', descricao: '3 gelatos + acompanhamentos', preco: 59.90, preco_original: 74.70, categoria: 'especial', ativo: true, estoque: 100, created_at: '2024-01-01' },
 ];
 
 const categorias = [
@@ -105,7 +94,7 @@ export default function ShopPage() {
             <CardContent className="pt-4">
               <div className="flex items-start justify-between">
                 <h3 className="font-semibold text-gray-900">{produto.nome}</h3>
-                {produto.emPromocao && (
+                {produto.preco_original && produto.preco_original > produto.preco && (
                   <Badge variant="danger" size="sm">OFF</Badge>
                 )}
               </div>
@@ -115,13 +104,13 @@ export default function ShopPage() {
                   <p className="text-lg font-bold text-primary-600">
                     {formatCurrency(produto.preco)}
                   </p>
-                  {produto.precoOriginal && (
+                  {produto.preco_original && (
                     <p className="text-sm text-gray-400 line-through">
-                      {formatCurrency(produto.precoOriginal)}
+                      {formatCurrency(produto.preco_original)}
                     </p>
                   )}
                 </div>
-                <Button size="sm" onClick={() => addItem(produto as any)}>
+                <Button size="sm" onClick={() => addItem(produto)}>
                   Adicionar
                 </Button>
               </div>

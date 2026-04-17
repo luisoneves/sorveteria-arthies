@@ -13,7 +13,8 @@ import type {
   Pedido, 
   Produto,
   LoginCredentials,
-  RegisterData
+  RegisterData,
+  PedidoItem,
 } from './base.adapter';
 
 // Auth Adapter Real (Supabase)
@@ -147,7 +148,7 @@ export class SupabasePedidoAdapter implements PedidoAdapter {
     return { pedidos: data || [] };
   }
 
-  async create(userId: string, items: any[], total: number): Promise<{ pedido: Pedido }> {
+  async create(userId: string, items: PedidoItem[], total: number): Promise<{ pedido: Pedido }> {
     // Criar pedido
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from('pedidos')

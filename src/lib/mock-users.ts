@@ -60,11 +60,11 @@ export function getMockUserByEmail(email: string): MockUser | undefined {
 }
 
 // Função para validar senha
-export function validateMockPassword(email: string, senha: string): MockUser | null {
+export function validateMockPassword(email: string, senha: string): Omit<MockUser, 'senha'> | null {
   const user = getMockUserByEmail(email);
   if (user && user.senha === senha) {
-    const { senha: _, ...userWithoutPassword } = user;
-    return userWithoutPassword as any;
+    const { senha: _, ...cleanUser } = user;
+    return cleanUser;
   }
   return null;
 }

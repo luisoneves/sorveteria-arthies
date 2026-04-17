@@ -8,11 +8,12 @@ import type {
   AuthAdapter, 
   PedidoAdapter, 
   ProdutoAdapter,
-  User, 
-  Pedido, 
+  PedidoItem,
+  User,
   Produto,
+  Pedido,
   LoginCredentials,
-  RegisterData
+  RegisterData,
 } from './base.adapter';
 
 // Dados mock - nunca usar em produção real
@@ -61,7 +62,7 @@ export class MockAuthAdapter implements AuthAdapter {
       id: String(mockUsers.length + 1),
       email: data.email,
       nome: data.nome,
-      role: (data.role as any) || 'cliente',
+      role: (data.role === 'admin' || data.role === 'gerente' || data.role === 'vendedor' || data.role === 'cliente') ? data.role : 'cliente',
       pontos: 0,
       telefone: data.telefone || '',
     };
@@ -84,7 +85,7 @@ export class MockPedidoAdapter implements PedidoAdapter {
     return { pedidos: mockPedidos };
   }
 
-  async create(userId: string, items: any[], totalCalculado: number): Promise<{ pedido: Pedido }> {
+  async create(userId: string, items: PedidoItem[], totalCalculado: number): Promise<{ pedido: Pedido }> {
     const novoPedido: Pedido = {
       id: String(pedidoIdCounter++),
       cliente_id: userId,
@@ -99,7 +100,7 @@ export class MockPedidoAdapter implements PedidoAdapter {
         pedido_id: String(pedidoIdCounter - 1),
         produto_id: item.id,
         quantidade: item.quantidade,
-        preco_unitario: item.preco,
+        preco_unitario: item.preco ?? 0,
         desconto: 0,
       })),
     };

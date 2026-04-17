@@ -43,7 +43,7 @@ function gerarDatas(): string[] {
   const startDate = new Date('2024-10-01');
   const endDate = new Date('2026-04-11');
   
-  let current = new Date(startDate);
+  const current = new Date(startDate);
   while (current <= endDate) {
     datas.push(current.toISOString().split('T')[0]);
     current.setDate(current.getDate() + 1);

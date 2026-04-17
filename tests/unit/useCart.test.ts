@@ -1,6 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCart } from '@/hooks/useCart';
+import type { Produto } from '@/types';
+
+const mockProduto: Produto = {
+  id: '1',
+  nome: 'Teste',
+  descricao: 'Teste desc',
+  preco: 10,
+  categoria: 'cremoso',
+  ativo: true,
+  estoque: 10,
+  created_at: '2024-01-01',
+};
 
 describe('useCart', () => {
   it('should start with empty cart', () => {
@@ -14,14 +26,7 @@ describe('useCart', () => {
     const { result } = renderHook(() => useCart());
     
     act(() => {
-      result.current.addItem({
-        id: '1',
-        nome: 'Teste',
-        preco: 10,
-        categoria: 'cremoso',
-        ativo: true,
-        estoque: 10,
-      } as any);
+      result.current.addItem(mockProduto);
     });
 
     expect(result.current.items.length).toBe(1);
@@ -34,14 +39,7 @@ describe('useCart', () => {
     const { result } = renderHook(() => useCart());
     
     act(() => {
-      result.current.addItem({
-        id: '1',
-        nome: 'Teste',
-        preco: 10,
-        categoria: 'cremoso',
-        ativo: true,
-        estoque: 10,
-      } as any);
+      result.current.addItem(mockProduto);
     });
 
     act(() => {
@@ -57,14 +55,7 @@ describe('useCart', () => {
     const { result } = renderHook(() => useCart());
     
     act(() => {
-      result.current.addItem({
-        id: '1',
-        nome: 'Teste',
-        preco: 10,
-        categoria: 'cremoso',
-        ativo: true,
-        estoque: 10,
-      } as any);
+      result.current.addItem(mockProduto);
     });
 
     act(() => {
@@ -78,22 +69,8 @@ describe('useCart', () => {
     const { result } = renderHook(() => useCart());
     
     act(() => {
-      result.current.addItem({
-        id: '1',
-        nome: 'Teste 1',
-        preco: 10,
-        categoria: 'cremoso',
-        ativo: true,
-        estoque: 10,
-      } as any);
-      result.current.addItem({
-        id: '2',
-        nome: 'Teste 2',
-        preco: 20,
-        categoria: 'sorbet',
-        ativo: true,
-        estoque: 10,
-      } as any);
+      result.current.addItem({ ...mockProduto, id: '1' });
+      result.current.addItem({ ...mockProduto, id: '2', nome: 'Teste 2', preco: 20 });
     });
 
     act(() => {
@@ -108,14 +85,7 @@ describe('useCart', () => {
     const { result } = renderHook(() => useCart());
     
     act(() => {
-      result.current.addItem({
-        id: '1',
-        nome: 'Teste',
-        preco: 100,
-        categoria: 'cremoso',
-        ativo: true,
-        estoque: 10,
-      } as any);
+      result.current.addItem({ ...mockProduto, preco: 100 });
     });
 
     expect(result.current.getPontos()).toBe(100);

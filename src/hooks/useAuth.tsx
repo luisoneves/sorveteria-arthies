@@ -20,35 +20,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    // Verificar se há usuário logado ao carregar
-    checkAuth();
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const data = await response.json();
-        setAuthState({
-          user: data.user,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } else {
+    const verifyAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setAuthState({
+            user: data.user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          setAuthState({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      } catch {
         setAuthState({
           user: null,
           isAuthenticated: false,
           isLoading: false,
         });
       }
-    } catch {
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-    }
-  }
+    };
+
+    verifyAuth();
+  }, []);
 
   async function login(credentials: LoginCredentials) {
     const response = await fetch('/api/auth/login', {

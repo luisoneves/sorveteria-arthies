@@ -13,6 +13,15 @@ export interface User {
   telefone?: string;
 }
 
+export interface PedidoItem {
+  id: string;
+  produto_id: string;
+  quantidade: number;
+  preco_unitario: number;
+  preco?: number;
+  desconto: number;
+}
+
 export interface Pedido {
   id: string;
   cliente_id: string;
@@ -23,7 +32,7 @@ export interface Pedido {
   pontos_usados: number;
   pontos_ganhos: number;
   created_at: string;
-  itens?: any[];
+  itens?: PedidoItem[];
 }
 
 export interface Produto {
@@ -58,7 +67,7 @@ export interface AuthAdapter {
 
 export interface PedidoAdapter {
   list(userId: string, role: string): Promise<{ pedidos: Pedido[] }>;
-  create(userId: string, items: any[], total: number): Promise<{ pedido: Pedido }>;
+  create(userId: string, items: PedidoItem[], total: number): Promise<{ pedido: Pedido }>;
 }
 
 export interface ProdutoAdapter {

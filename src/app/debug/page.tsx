@@ -4,12 +4,19 @@ import { useState } from 'react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 
+interface DebugResult {
+  status: number | string;
+  ok: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
+}
+
 export default function DebugPage() {
   const { addToast } = useToast();
   const [testEmail, setTestEmail] = useState('debug@teste.com');
   const [testNome, setTestNome] = useState('Debug User');
   const [testSenha, setTestSenha] = useState('teste123');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<DebugResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function testRegister() {
@@ -39,13 +46,14 @@ export default function DebugPage() {
       } else {
         addToast('error', `Erro: ${data.error || data.message}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setResult({
         status: 'NETWORK_ERROR',
         ok: false,
-        error: err.message,
+        error: errorMessage,
       });
-      addToast('error', `Erro de rede: ${err.message}`);
+      addToast('error', `Erro de rede: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -77,13 +85,14 @@ export default function DebugPage() {
       } else {
         addToast('error', `Erro: ${data.error || data.message}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setResult({
         status: 'NETWORK_ERROR',
         ok: false,
-        error: err.message,
+        error: errorMessage,
       });
-      addToast('error', `Erro de rede: ${err.message}`);
+      addToast('error', `Erro de rede: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -101,11 +110,12 @@ export default function DebugPage() {
         ok: response.ok,
         data,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setResult({
         status: 'NETWORK_ERROR',
         ok: false,
-        error: err.message,
+        error: errorMessage,
       });
     } finally {
       setLoading(false);

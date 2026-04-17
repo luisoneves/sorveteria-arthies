@@ -5,7 +5,26 @@ import { mockAdapters } from '@/lib/api/adapters/mock.adapter';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
-const mockPedidos: any[] = [];
+interface PedidoItem {
+  produto_id?: string;
+  id: string;
+  quantidade: number;
+  preco: number;
+}
+
+interface MockPedido {
+  cliente_id: string;
+  vendedor_id: string | null;
+  status: string;
+  status_pagamento: string;
+  total: number;
+  pontos_usados: number;
+  pontos_ganhos: number;
+  created_at: string;
+  itens: PedidoItem[];
+}
+
+const mockPedidos: MockPedido[] = [];
 let pedidoIdCounter = 1;
 
 async function getUser() {
@@ -19,7 +38,7 @@ async function getUser() {
   }
 }
 
-async function calcularTotal(items: any[], useMock: boolean): Promise<number> {
+async function calcularTotal(items: PedidoItem[], useMock: boolean): Promise<number> {
   let totalCalculado = 0;
   
   for (const item of items) {
@@ -129,7 +148,7 @@ export async function POST(request: Request) {
       pontos_usados: 0,
       pontos_ganhos: Math.floor(totalCalculado / 10),
       created_at: new Date().toISOString(),
-      itens: items.map((item: any, idx: number) => ({
+      itens: items.map((item: PedidoItem, idx: number) => ({
         id: String(idx + 1),
         pedido_id: String(pedidoIdCounter - 1),
         produto_id: item.id,
